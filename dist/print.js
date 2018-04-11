@@ -71,7 +71,7 @@ require = (function (modules, cache, entry) {
 
   // Override the current require with this new one
   return newRequire;
-})({4:[function(require,module,exports) {
+})({3:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -85,22 +85,68 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var Print = exports.Print = function () {
   function Print() {
     _classCallCheck(this, Print);
+
+    Object.defineProperty(this, 'showNoneStyle', {
+      enumerable: true,
+      writable: true,
+      value: {
+        display: 'none!important',
+        height: '0!important',
+        width: '0!important',
+        overflow: 'hidden!important'
+      }
+    });
   }
 
-  _createClass(Print, null, [{
+  _createClass(Print, [{
+    key: 'addStyle',
+    value: function addStyle(name, styleObj) {
+      var style = document.createElement('style');
+      var strobj = JSON.stringify(styleObj).replace(/,|"/g, function (e) {
+        if (e === ',') return ';';else if (e === '"') return '';
+      });
+      style.innerText = '@media print{' + name + ' ' + strobj + '}';
+      document.head.appendChild(style);
+    }
+  }, {
     key: 'printElement',
-    value: function printElement(el, style) {
-      var ele = document.querySelector(el);
-      var otherbox = document.createElement('div');
-      otherbox.classList.add('print-box');
-      otherbox.appendChild(ele);
+    value: function printElement(el) {
+      // 初始化类名
+      var hideclass = 'print' + Date.now();
+      // 添加 隐藏样式
+      this.addStyle('.' + hideclass, this.showNoneStyle);
+
+      // 隐藏其他不相关元素
       document.body.childNodes.forEach(function (item) {
-        // console.log(item.classList)
-        if (item.nodeName !== '#text') {
-          item.classList.add('hide');
+        if (!item.nodeName.startsWith('#')) {
+          item.classList.add(hideclass);
+        } else if (item.nodeName === '#text') {
+          var span = document.createElement('span');
+          span.innerText = item.wholeText;
+          span.classList.add(hideclass);
+          document.body.replaceChild(span, item);
         }
       });
+
+      // 获取要打印的元素
+      var ele = document.querySelector(el);
+
+      // 创建 外壳元素并将打印元素加入
+      var otherbox = document.createElement('div');
+      otherbox.appendChild(ele.cloneNode(true));
+      // 将外壳元素添加的文档
       document.body.appendChild(otherbox);
+
+      //当完成或取消后， 复原
+      window.onafterprint = function () {
+        document.body.removeChild(otherbox);
+        document.querySelectorAll('.' + hideclass).forEach(function (item) {
+          item.classList.remove(hideclass);
+        });
+      };
+
+      // 打印
+      window.print();
     }
   }]);
 
@@ -167,7 +213,7 @@ function reloadCSS() {
 }
 
 module.exports = reloadCSS;
-},{"./bundle-url":6}],3:[function(require,module,exports) {
+},{"./bundle-url":6}],4:[function(require,module,exports) {
 
         var reloadCSS = require('_css_loader');
         module.hot.dispose(reloadCSS);
@@ -181,9 +227,14 @@ var _print = require('./print');
 require('./print.css');
 
 window.onload = function () {
-  _print.Print.printElement('.box');
+  // Print.printElement('.box')
+  var print = new _print.Print();
+  // print.setShowNoneStyle({
+  //   'height': '100px'
+  // })
+  print.printElement('.box-item');
 };
-},{"./print":4,"./print.css":3}],11:[function(require,module,exports) {
+},{"./print":3,"./print.css":4}],14:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -205,7 +256,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '56953' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '63531' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -306,5 +357,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[11,2])
+},{}]},{},[14,2])
 //# sourceMappingURL=/dist/print.map
